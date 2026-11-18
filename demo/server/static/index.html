@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Português → glosa em Libras</title>
+<style>
+  :root { --tx:#1c2430; --mut:#5d6878; --bd:#d7dce3; --bg:#f5f7fa; --ac:#2a6fb0; --card:#fff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, "Segoe UI", Arial, sans-serif; color:var(--tx); background:var(--bg); }
+  main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; color: var(--mut); }
+  .box { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin-bottom:6px; }
+  textarea { width:100%; min-height:84px; padding:10px; border:1px solid var(--bd); border-radius:8px; font:inherit; resize:vertical; }
+  button { margin-top:10px; padding:9px 16px; border:0; border-radius:8px; background:var(--ac); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.55; cursor:default; }
+  #status { color:var(--mut); min-height:22px; margin:6px 0 12px; }
+  .item { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .pt { font-weight:600; margin-bottom:8px; }
+  .row { display:grid; grid-template-columns: 190px 1fr; gap:10px; padding:6px 0; border-top:1px solid #eef0f4; }
+  .row span:first-child { color:var(--mut); font-size:13px; padding-top:2px; }
+  .glosa { font-family: ui-monospace, Consolas, monospace; font-size:14px; overflow-wrap:anywhere; }
+  .na { color:#a23b3b; font-style:italic; font-family:inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Português → glosa em Libras</h1>
+  <p class="sub">Prova de conceito do TCC. Compara, frase a frase, as abordagens disponíveis no servidor local.</p>
+  <div id="status">Verificando o servidor…</div>
+  <div class="box">
+    <label for="texto">Texto em português</label>
+    <textarea id="texto">Você sabe dirigir? Eu não vi ninguém.</textarea>
+    <button id="btTexto">Traduzir texto</button>
+  </div>
+  <div class="box">
+    <label for="arquivo">Arquivo de áudio ou vídeo</label>
+    <input type="file" id="arquivo" accept="audio/*,video/*">
+    <div><button id="btArquivo">Transcrever e traduzir</button></div>
+  </div>
+  <div id="saida"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const status = (t) => { $("status").textContent = t; };
+
+function render(dados) {
+  const saida = $("saida");
+  saida.textContent = "";
+  for (const item of dados.results) {
+    const div = document.createElement("div"); div.className = "item";
+    const pt = document.createElement("div"); pt.className = "pt"; pt.textContent = item.pt; div.appendChild(pt);
+    for (const m of dados.modelos) {
+      const row = document.createElement("div"); row.className = "row";
+      const a = document.createElement("span"); a.textContent = m.rotulo;
+      const b = document.createElement("span"); b.className = "glosa";
+      if (item[m.id]) { b.textContent = item[m.id]; }
+      else { b.textContent = "modelo indisponível"; b.classList.add("na"); }
+      row.append(a, b); div.appendChild(row);
+    }
+    saida.appendChild(div);
+  }
+  status(dados.results.length + " frase(s) em " + dados.segundos + " s.");
+}
+
+async function chamar(url, opcoes, botao) {
+  botao.disabled = true; status("Processando… a primeira chamada carrega os modelos e demora mais.");
+  try {
+    const r = await fetch(url, opcoes);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    render(await r.json());
+  } catch (e) { status("Erro: " + e.message); }
+  botao.disabled = false;
+}
+
+$("btTexto").onclick = () => chamar("/translate", { method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: $("texto").value }) }, $("btTexto"));
+$("btArquivo").onclick = () => {
+  const f = $("arquivo").files[0];
+  if (!f) { status("Escolha um arquivo primeiro."); return; }
+  const fd = new FormData(); fd.append("file", f, f.name);
+  chamar("/transcribe_and_translate", { method: "POST", body: fd }, $("btArquivo"));
+};
+fetch("/health").then(r => r.json()).then(h => {
+  const falhas = Object.keys(h.indisponiveis);
+  status("Servidor pronto. Modelos: " + (h.disponiveis.join(", ") || "nenhum") + (falhas.length ? " | indisponíveis: " + falhas.join(", ") : ""));
+}).catch(() => status("Servidor não respondeu."));
+</script>
+</body>
+</html>

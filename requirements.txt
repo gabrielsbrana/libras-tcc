@@ -1,0 +1,14 @@
+# Avaliação e figuras
+pandas>=2.0
+numpy>=1.24
+sacrebleu>=2.4
+matplotlib>=3.8
+
+# Modelo com LoRA (inferência)
+torch>=2.1
+transformers>=4.40
+peft>=0.11
+sentencepiece>=0.2
+
+# Prova de conceito (demo/): ver demo/setup_wsl.sh
+# fastapi, uvicorn, python-multipart, faster-whisper, vlibras-translate (Java 8)

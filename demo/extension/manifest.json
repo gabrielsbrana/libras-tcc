@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Glosa Libras - Demo TCC",
+  "version": "1.1",
+  "description": "Captura o áudio da aba (por exemplo, um vídeo do YouTube) e mostra a glosa em Libras gerada pelos modelos comparados no TCC.",
+  "permissions": ["tabCapture", "offscreen", "activeTab", "storage"],
+  "host_permissions": ["http://127.0.0.1:8000/*"],
+  "action": { "default_popup": "popup.html", "default_title": "Glosa Libras" },
+  "background": { "service_worker": "background.js" },
+  "icons": { "128": "icon128.png" }
+}
