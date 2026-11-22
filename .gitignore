@@ -8,3 +8,6 @@ data/processed/
 *.pt
 .ipynb_checkpoints/
 .DS_Store
+tcc/latex/*.aux
+tcc/latex/*.log
+tcc/latex/*.out

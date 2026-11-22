@@ -1,0 +1,10 @@
+categoria,pares,regras,seq2seq,lora
+marcador_ponto,9310,39.41,38.37,18.78
+desambiguacao_amp,7197,28.52,30.23,11.55
+composto_underscore,2562,35.47,30.18,15.7
+numeral,2005,27.18,18.48,9.72
+negacao_fundida,1316,38.85,31.24,19.02
+interrogacao,848,45.6,57.14,31.54
+verbo_direcional,700,20.27,18.57,11.18
+negacao_isolada,379,30.86,29.74,16.75
+exclamacao,100,48.55,47.06,32.76
