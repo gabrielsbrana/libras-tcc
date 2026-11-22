@@ -3,7 +3,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[brazil]{babel}
-\usepackage{graphicx,url,booktabs,array,tabularx,xcolor,amssymb,amsmath}
+\usepackage{graphicx,url,booktabs,array,tabularx,xcolor,amssymb,amsmath,rotating}
 \usepackage[hidelinks]{hyperref}
 \urlstyle{same}
 \graphicspath{{figuras/}}
@@ -25,7 +25,7 @@
 % Figura: título em negrito + legenda explicativa abaixo
 \newcommand{\figura}[4]{%
   \begin{figure}[#1]\centering
-  \includegraphics[width=#2\textwidth]{#3}
+  \includegraphics[width=#2]{#3}
   #4
   \end{figure}}
 \newcommand{\gl}[1]{\textsf{\small #1}}
@@ -34,7 +34,7 @@
 
 \title{Tradução automática de português para glosa em Libras:\\
 regras, rede sequência a sequência e modelo pré-treinado com LoRA}
-\author{Gabriel Sbrana}
+\author{Gabriel Sbrana\inst{1}}
 \address{MBA em Data Science -- Universidade de Fortaleza (UNIFOR)\\Fortaleza, CE -- Brasil}
 
 \begin{document}
@@ -64,7 +64,7 @@ regras, rede sequência a sequência e modelo pré-treinado com LoRA}
 \maketitle
 
 \begin{resumo}
-A maior parte do conteúdo digital brasileiro não tem versão em Libras, e os tradutores automáticos que tentam preencher essa lacuna dependem de uma etapa intermediária: converter o texto em português em \emph{glosa}, a notação que diz ao avatar quais sinais executar. Se a glosa estiver errada, o avatar sinaliza o erro. Este trabalho compara, sobre o mesmo conjunto de teste e com o mesmo protocolo, três formas de fazer essa conversão: o tradutor por regras do VLibras (\gl{vlibras-translate}), uma rede sequência a sequência com atenção treinada do zero e o modelo pré-treinado PTT5-small ajustado com LoRA. Os experimentos usam o corpus público VLibrasBD (127.349 pares português--glosa), com teste de 12.732 pares, e medem BLEU e chrF no agregado, por domínio, por nove fenômenos linguísticos da glosa e por comprimento da frase. As regras obtiveram BLEU 33,98 e chrF 69,71; a rede treinada do zero com apenas 40.000 pares, BLEU 28,08 e chrF 50,67, superando as regras em perguntas (57,1 contra 45,6) e em desambiguação de sentido; o PTT5-small com LoRA, BLEU 9,19 e chrF 24,05, com desempenho que despenca em frases longas, onde até 46\% das saídas repetem a mesma glosa. A degradação das regras com o comprimento é suave e explica sua queda no domínio governamental, de frases mais longas. Conclui-se que as regras continuam sendo a referência no agregado, que um modelo simples treinado com exemplos já as supera nos fenômenos dependentes de contexto e que usar um modelo pré-treinado não garante, por si só, melhor tradução. Uma prova de conceito transcreve vídeo ou áudio com Whisper e exibe as glosas dos tradutores lado a lado.
+Quase todo o conteúdo digital brasileiro não tem versão em Libras, e os tradutores automáticos que tentam preencher essa lacuna dependem de uma etapa intermediária: converter o texto em português em \emph{glosa}, a notação que diz ao avatar quais sinais executar. Se a glosa estiver errada, o avatar sinaliza o erro. Este trabalho compara, sobre o mesmo conjunto de teste e com o mesmo protocolo, três formas de fazer essa conversão: o tradutor por regras do VLibras (\gl{vlibras-translate}), uma rede sequência a sequência com atenção treinada do zero e o modelo pré-treinado PTT5-small ajustado com LoRA. Os experimentos usam o corpus público VLibrasBD (127.349 pares português--glosa), com teste de 12.732 pares, e medem BLEU e chrF no agregado, por domínio, por nove fenômenos linguísticos da glosa e por comprimento da frase. As regras obtiveram BLEU 33,98 e chrF 69,71; a rede treinada do zero com apenas 40.000 pares, BLEU 28,08 e chrF 50,67, superando as regras em perguntas (57,1 contra 45,6) e, por margem pequena, em desambiguação de sentido; o PTT5-small com LoRA, BLEU 9,19 e chrF 24,05, com desempenho que despenca em frases longas, onde até 46\% das saídas repetem a mesma glosa. A queda das regras no domínio governamental vem de frases mais longas e de referências com mais marcas de desambiguação, que as regras nunca produzem; um pós-processamento simples de suas saídas eleva o BLEU para 35,57. Conclui-se que as regras continuam sendo a referência no agregado, que um modelo simples treinado com exemplos já as supera nos fenômenos dependentes de contexto e que usar um modelo pré-treinado não garante, por si só, melhor tradução. Uma prova de conceito transcreve vídeo ou áudio com Whisper e exibe as glosas dos tradutores lado a lado.
 \end{resumo}
 
 \begin{abstract}
@@ -76,7 +76,7 @@ Most Brazilian digital content has no version in Libras (Brazilian Sign Language
 
 A Língua Brasileira de Sinais (Libras) é reconhecida como meio legal de comunicação e expressão desde a Lei nº 10.436/2002 \cite{lei}, regulamentada pelo Decreto nº 5.626/2005 \cite{decreto}. É uma língua visual-espacial, com gramática própria, e não uma versão sinalizada do português. Para muitas pessoas surdas, a Libras é a primeira língua e o português escrito, a segunda; por isso, uma legenda em português não substitui a sinalização.
 
-Apesar do reconhecimento legal, quase todo o conteúdo digital publicado em português, em especial vídeos em plataformas on-line, não tem versão em Libras. Intérpretes humanos produzem traduções de qualidade superior, mas não acompanham o volume publicado diariamente. As soluções automáticas mais difundidas no país, a suíte VLibras \cite{lima2022} e o Hand Talk \cite{handtalk}, seguem o mesmo caminho em duas etapas: primeiro o texto em português é convertido em uma sequência de \emph{glosas}, notação textual que representa os sinais; depois um avatar 3D executa essa sequência.
+Apesar do reconhecimento legal, quase todo o conteúdo digital publicado em português, em especial vídeos em plataformas on-line, não tem versão em Libras. Intérpretes humanos produzem traduções de qualidade superior, mas não acompanham o volume publicado diariamente. As soluções automáticas mais difundidas no país, a suíte VLibras \cite{lima2022} e o Hand Talk \cite{handtalk}, usam um avatar 3D; no VLibras, cujo funcionamento está documentado, o caminho tem duas etapas: primeiro o texto em português é convertido em uma sequência de \emph{glosas}, notação textual que representa os sinais; depois um avatar 3D executa essa sequência.
 
 \textbf{O problema.} A segunda etapa depende inteiramente da primeira: se a glosa estiver errada, o avatar sinaliza o erro com perfeição. O componente aberto de tradução do VLibras, o pacote \gl{vlibras-translate}, faz essa conversão com regras linguísticas. Regras são previsíveis e não exigem dados de treino, mas têm dificuldades conhecidas com fenômenos que dependem do contexto da frase, como a negação incorporada ao verbo, os verbos direcionais e a escolha do sentido de palavras ambíguas \cite{lima2022}.
 
@@ -84,10 +84,13 @@ Apesar do reconhecimento legal, quase todo o conteúdo digital publicado em port
 
 \textbf{O que este trabalho faz.} Compara, com o mesmo conjunto de teste, a mesma normalização e as mesmas métricas, três famílias de métodos de complexidade crescente: (i) as regras do \gl{vlibras-translate}, como linha de base; (ii) uma rede sequência a sequência LSTM com atenção, treinada do zero em um computador pessoal sem GPU; e (iii) o modelo pré-treinado em português PTT5-small, ajustado com LoRA em uma GPU gratuita. Além do número agregado, o desempenho é detalhado por domínio do texto (governamental e geral), por nove fenômenos linguísticos anotados na glosa e por comprimento da frase, o que mostra \emph{onde} cada abordagem falha. A Figura~\ref{fig:visao} resume o problema, os dados, os três tradutores, o protocolo de avaliação e o resultado principal.
 
-\figura{t}{1}{fig01_visao_geral.png}{\caption[Visão geral do problema e da metodologia]{\textbf{Visão geral do problema e da metodologia.} Da esquerda para a direita: o problema (conteúdo em português sem versão em Libras, em que a glosa define o que o avatar sinaliza), os dados (VLibrasBD dividido em treino, validação e teste, estratificado por domínio), os três tradutores comparados (cores usadas em todas as figuras: cinza para regras, azul para a rede treinada do zero, laranja para o PTT5 com LoRA), o protocolo de avaliação e o resultado principal, ao lado da prova de conceito.}\label{fig:visao}}
+\begin{sidewaysfigure}\centering
+\includegraphics[width=\textheight]{fig01_visao_geral.png}
+\caption[Visão geral do problema e da metodologia]{\textbf{Visão geral do problema e da metodologia.} Da esquerda para a direita: o problema (conteúdo em português sem versão em Libras, em que a glosa define o que o avatar sinaliza), os dados (VLibrasBD dividido em treino, validação e teste, estratificado por domínio), os três tradutores comparados (cores usadas em todas as figuras: cinza para regras, azul para a rede treinada do zero, laranja para o PTT5 com LoRA), o protocolo de avaliação e o resultado principal, ao lado da prova de conceito.}\label{fig:visao}
+\end{sidewaysfigure}
 
 
-As contribuições são: (a) uma avaliação controlada e reprodutível das três abordagens sobre o VLibrasBD, com análise por fenômeno e por comprimento; (b) a constatação de que uma rede simples treinada com 40.000 pares já supera as regras em perguntas e em desambiguação de sentido; (c) a evidência de que o modelo pré-treinado com LoRA, na configuração testada, ficou muito abaixo das duas alternativas, com diagnóstico do modo de falha (repetição em frases longas); (d) a documentação das incompatibilidades de ambiente do \gl{vlibras-translate}, útil para quem queira reproduzi-lo; e (e) uma prova de conceito que parte de vídeo ou áudio e exibe as glosas lado a lado, inclusive em uma extensão para navegador. Código, amostras de dados, predições e figuras estão no repositório do trabalho.
+As contribuições são: (a) uma avaliação controlada e reprodutível das três abordagens sobre o VLibrasBD, com análise por fenômeno e por comprimento; (b) a constatação de que uma rede simples treinada com 40.000 pares já supera as regras em perguntas, com folga, e em desambiguação de sentido, por margem pequena; (c) uma análise de erros que mostra quais marcas da glosa as regras nunca produzem e quanto um pós-processamento simples recupera; (d) a evidência de que o modelo pré-treinado com LoRA, na configuração testada, ficou muito abaixo das duas alternativas, com diagnóstico do modo de falha (repetição em frases longas); (e) a documentação das incompatibilidades de ambiente do \gl{vlibras-translate}, útil para quem queira reproduzi-lo; e (f) uma prova de conceito que parte de vídeo ou áudio e exibe as glosas lado a lado, inclusive em uma extensão para navegador. Código, amostras de dados, predições e figuras estão no repositório do trabalho.
 
 O restante do artigo está organizado assim: a Seção~2 apresenta a glosa, os modelos e os trabalhos relacionados; a Seção~3 descreve dados, modelos e protocolo de avaliação, começando pela visão geral da Figura~1; a Seção~4 apresenta e discute os resultados; a Seção~5 conclui, com limitações e trabalhos futuros.
 
@@ -108,11 +111,11 @@ Glosa não é Libras: a notação perde as marcações não manuais e boa parte 
 
 A Figura~\ref{fig:atencao} ilustra o mecanismo para uma frase com negação. A cada passo, o decodificador calcula um peso para cada estado do codificador; os pesos somam 1 e definem uma média ponderada desses estados, o \emph{vetor de contexto}, que entra no cálculo da próxima glosa. Ao gerar \gl{NÃO\_VER}, um modelo bem treinado concentra os pesos em ``não'' e ``viu'', o que permite fundir as duas palavras em um único sinal, operação que depende de olhar mais de uma palavra ao mesmo tempo.
 
-\figura{ht}{0.92}{fig_atencao.png}{\caption[Mecanismo de atenção]{\textbf{Mecanismo de atenção em uma rede sequência a sequência.} O codificador transforma cada palavra em português em um estado ($h_1$ a $h_5$); para gerar cada glosa ($s_1$ a $s_4$), o decodificador combina esses estados com pesos que somam 1 (espessura das linhas). Os pesos mostrados são ilustrativos, não extraídos do modelo treinado.}\label{fig:atencao}}
+\figura{!htbp}{\textwidth}{fig_atencao.png}{\caption[Mecanismo de atenção]{\textbf{Mecanismo de atenção em uma rede sequência a sequência.} O codificador transforma cada palavra em português em um estado ($h_1$ a $h_5$); para gerar cada glosa ($s_1$ a $s_4$), o decodificador combina esses estados com pesos que somam 1 (espessura das linhas). Os pesos mostrados são ilustrativos, não extraídos do modelo treinado.}\label{fig:atencao}}
 
 \textbf{Modelos pré-treinados e LoRA.} O T5 \cite{t5} trata toda tarefa de texto como conversão de texto em texto e é pré-treinado em grande volume de dados; o PTT5 \cite{ptt5} é sua versão pré-treinada em português brasileiro. Ajustar todos os parâmetros desses modelos é caro; o LoRA \cite{lora} congela os pesos originais e treina apenas matrizes de baixo posto adicionadas a algumas camadas de atenção, reduzindo os parâmetros treináveis a uma fração pequena do total. Em uma camada com matriz de pesos $W$ de dimensão $d \times d$, o LoRA soma à saída o termo $\frac{\alpha}{r} B A x$, em que $A$ ($r \times d$) e $B$ ($d \times r$) são as únicas matrizes treinadas e o posto $r$ é muito menor que $d$ (Figura~\ref{fig:lora}). Com $B$ iniciada em zero, o modelo começa exatamente igual ao pré-treinado e se afasta dele apenas na direção que os dados de treino indicam. Ao fim, o adaptador pode ser guardado separadamente, com poucos megabytes.
 
-\figura{ht}{0.82}{fig_lora.png}{\caption[Ajuste com LoRA]{\textbf{Ajuste fino com LoRA.} Os pesos pré-treinados $W$ ficam congelados (cinza); duas matrizes pequenas, $A$ e $B$ (laranja), aprendem uma correção de baixo posto que é somada à saída da camada. Na configuração deste trabalho, isso corresponde a 0,97\% dos parâmetros do PTT5-small.}\label{fig:lora}}
+\figura{!htbp}{5.46in}{fig_lora.png}{\caption[Ajuste com LoRA]{\textbf{Ajuste fino com LoRA.} Os pesos pré-treinados $W$ ficam congelados (cinza); duas matrizes pequenas, $A$ e $B$ (laranja), aprendem uma correção de baixo posto que é somada à saída da camada. Na configuração deste trabalho, isso corresponde a 0,97\% dos parâmetros do PTT5-small.}\label{fig:lora}}
 
 \subsection{Métricas}
 
@@ -120,7 +123,7 @@ O BLEU \cite{bleu} mede a sobreposição de sequências de 1 a 4 palavras ($n$-g
 \begin{equation}
 \mathrm{BLEU} = \mathrm{BP}\cdot\exp\Big(\tfrac{1}{4}\textstyle\sum_{n=1}^{4}\log p_n\Big),\qquad \mathrm{BP}=\min\big(1,\,e^{\,1-r/c}\big),
 \end{equation}
-em que BP penaliza saídas mais curtas que a referência. Calculado sobre o conjunto inteiro (BLEU de corpus), soma as contagens de todas as frases antes da razão; calculado frase a frase (BLEU por sentença), permite médias sobre subconjuntos. O chrF \cite{chrf} é a média harmônica, com peso maior para a cobertura, entre precisão e cobertura de sequências de 1 a 6 caracteres; o chrF \cite{chrf} mede a sobreposição de sequências de caracteres, sendo mais tolerante a variações de forma (\gl{QUERER} e \gl{QUER}, por exemplo). Ambos variam de 0 a 100. Ambos foram calculados com o SacreBLEU \cite{sacrebleu}, que padroniza a tokenização e torna os números comparáveis entre trabalhos.
+em que BP penaliza saídas mais curtas que a referência. Calculado sobre o conjunto inteiro (BLEU de corpus), soma as contagens de todas as frases antes da razão; calculado frase a frase (BLEU por sentença), permite médias sobre subconjuntos. O chrF \cite{chrf} é a média harmônica, com peso maior para a cobertura, entre precisão e cobertura de sequências de 1 a 6 caracteres; por comparar caracteres, é mais tolerante a variações de forma (\gl{QUERER} e \gl{QUER}, por exemplo). As duas métricas variam de 0 a 100 e foram calculadas com o SacreBLEU \cite{sacrebleu}, que padroniza a tokenização e torna os números comparáveis entre trabalhos.
 
 \subsection{Trabalhos relacionados}
 
@@ -130,7 +133,7 @@ Fora do Brasil, a etapa texto$\to$glosa é tratada como tradução com poucos re
 
 A Tabela~\ref{tab:relacionados} resume a posição deste trabalho. Nenhum dos estudos encontrados compara, na direção português$\to$glosa e sobre um corpus público de grande porte, regras, rede treinada do zero e modelo pré-treinado com ajuste eficiente sob o mesmo protocolo, nem detalha o desempenho por fenômeno e por comprimento.
 
-\begin{table}[ht]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \caption{Comparação com trabalhos relacionados (R = regras; S2S = sequência a sequência do zero; PT = modelo pré-treinado).}\label{tab:relacionados}
 \begin{tabularx}{\textwidth}{@{}lXcccl@{}}\toprule
 Trabalho & Direção e dados & R & S2S & PT & Avaliação\\\midrule
@@ -156,13 +159,13 @@ O VLibrasBD foi obtido do Mendeley Data \cite{mendeley} (licença CC BY-SA 4.0).
 
 Os dois domínios diferem muito no comprimento (Figura~\ref{fig:comp}): a mediana é de 5 palavras no geral (frases curtas do cotidiano) e de 11 no governamental (textos informativos de serviços públicos). Essa diferença será decisiva para interpretar os resultados por domínio.
 
-\figura{ht}{0.86}{fig02_comprimento.png}{\caption[Comprimento das frases por domínio]{\textbf{Comprimento das frases por domínio.} Distribuição do número de palavras por frase em português no corpus inteiro; frases com 60 palavras ou mais foram agrupadas na última faixa. O domínio governamental tem frases duas vezes mais longas, na mediana, que o geral.}\label{fig:comp}}
+\figura{!htbp}{5.16in}{fig02_comprimento.png}{\caption[Comprimento das frases por domínio]{\textbf{Comprimento das frases por domínio.} Distribuição do número de palavras por frase em português no corpus inteiro; frases com 60 palavras ou mais foram agrupadas na última faixa. O domínio governamental tem frases duas vezes mais longas, na mediana, que o geral.}\label{fig:comp}}
 
 \subsection{Auditoria das glosas e fenômenos linguísticos}
 
-Para avaliar além do número agregado, as glosas de referência foram inspecionadas em busca de marcas que identificassem fenômenos da Libras. Foram definidas nove categorias, detectadas por expressões regulares sobre a referência (Tabela~\ref{tab:cat}). A pergunta respondida é ``como o modelo se sai nas frases em que o fenômeno deveria aparecer'', e não ``o modelo produziu a marca''. A Figura~\ref{fig:fen} mostra a frequência de cada fenômeno no teste: pontuação final e desambiguação aparecem na maioria das frases; exclamação, em apenas 100.
+Para avaliar além do número agregado, as glosas de referência foram inspecionadas em busca de marcas que identificassem fenômenos da Libras. Foram definidas nove categorias, detectadas por expressões regulares sobre a referência (Tabela~\ref{tab:cat}). A pergunta respondida é ``como o modelo se sai nas frases em que o fenômeno deveria aparecer'', e não ``o modelo produziu a marca''. A Figura~\ref{fig:fen} mostra a frequência de cada fenômeno no teste: pontuação final e desambiguação aparecem na maioria das frases; exclamação, em apenas 100. Como o padrão de numeral casa qualquer algarismo, ele também capta os marcadores de pessoa dos verbos direcionais (\gl{1S\_}); 615 dos 2.005 pares dessa categoria não têm outro número.
 
-\begin{table}[ht]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \caption{Fenômenos linguísticos detectados na glosa de referência.}\label{tab:cat}
 \begin{tabularx}{\textwidth}{@{}lXl@{}}\toprule
 Categoria & Padrão detectado & Exemplo\\\midrule
@@ -178,11 +181,11 @@ Exclamação & marcador \gl{[EXCLAMAÇÃO]} & \gl{QUE BOM [EXCLAMAÇÃO]}\\\bott
 \end{tabularx}
 \end{table}
 
-\figura{ht}{0.86}{fig03_fenomenos.png}{\caption[Frequência dos fenômenos no teste]{\textbf{Frequência dos fenômenos no conjunto de teste.} Número de pares (e percentual dos 12.732) cuja glosa de referência contém cada fenômeno. Uma mesma frase pode conter vários fenômenos. Categorias com poucos pares, como exclamação, têm resultados mais instáveis.}\label{fig:fen}}
+\figura{!htbp}{\textwidth}{fig03_fenomenos.png}{\caption[Frequência dos fenômenos no teste]{\textbf{Frequência dos fenômenos no conjunto de teste.} Número de pares (e percentual dos 12.732) cuja glosa de referência contém cada fenômeno. Uma mesma frase pode conter vários fenômenos. Categorias com poucos pares, como exclamação, têm resultados mais instáveis.}\label{fig:fen}}
 
 \subsection{Linha de base: tradutor por regras}
 
-O \gl{vlibras-translate} foi aplicado a cada frase de teste; por não ser treinado, não usa os conjuntos de treino e validação. Executá-lo exigiu reconstruir um ambiente antigo: Java 8 (o analisador sintático depende de uma biblioteca removida das versões seguintes), NLTK anterior à 3.8.2 e Linux, já que um componente binário não existe para Windows (no trabalho, usou-se o WSL). Além disso, a comunicação interna do pacote só aceita caracteres Latin-1; aspas curvas, travessões e reticências foram convertidos para equivalentes simples, o que afeta 1,5\% do corpus (185 frases do teste).
+O \gl{vlibras-translate} foi aplicado a cada frase de teste; por não ser treinado, não usa os conjuntos de treino e validação. Executá-lo exigiu reconstruir um ambiente antigo: Java 8 (o analisador sintático depende de uma biblioteca removida das versões seguintes), NLTK anterior à 3.8.2 e Linux, já que um componente binário não existe para Windows (no trabalho, usou-se o WSL). Além disso, a comunicação interna do pacote só aceita caracteres Latin-1; aspas curvas, travessões e reticências foram convertidos para equivalentes simples, o que afeta 1.910 pares do corpus (1,5\%) e 185 frases do teste (1,45\%).
 
 \subsection{Rede sequência a sequência treinada do zero}
 
@@ -194,7 +197,7 @@ O treino foi feito em um computador pessoal sem GPU, em resposta direta à preoc
 
 O terceiro modelo é o PTT5-small com vocabulário em português (\gl{unicamp-dl/ptt5-small-portuguese-vocab}) ajustado com LoRA pela biblioteca PEFT, no Google Colab com GPU Tesla T4 gratuita. A Tabela~\ref{tab:lora} traz a configuração. Foram treinados 589.824 dos 61.096.448 parâmetros (0,97\%), sobre o conjunto de treino completo, e o adaptador resultante ocupa 4,6 MB.
 
-\begin{table}[ht]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \caption{Configuração do ajuste fino do PTT5-small com LoRA.}\label{tab:lora}
 \begin{tabular}{@{}ll@{}}\toprule
 Parâmetro & Valor\\\midrule
@@ -215,7 +218,7 @@ Tempo de treino & 9.189 s ($\approx$2,6 h) em uma T4\\\bottomrule
 
 A Tabela~\ref{tab:amb} resume onde cada etapa foi executada. O objetivo foi mostrar o que é possível com recursos ao alcance de uma equipe pequena: um computador pessoal sem placa gráfica e o plano gratuito do Google Colab. O código de preparação, treino e avaliação está organizado em scripts e notebooks numerados no repositório, com semente fixa (42) na divisão dos dados. O tempo das regras variou entre execuções conforme o número de processos paralelos usados.
 
-\begin{table}[ht]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \caption{Ambiente de execução de cada etapa.}\label{tab:amb}
 \begin{tabularx}{\textwidth}{@{}lXl@{}}\toprule
 Etapa & Ambiente & Tempo\\\midrule
@@ -235,7 +238,7 @@ As três abordagens foram avaliadas nos mesmos 12.732 pares de teste. Antes das 
 
 Para mostrar a aplicação prática, foi implementado um servidor local que recebe texto, áudio ou vídeo. O áudio é extraído com ffmpeg e transcrito pelo Whisper \cite{whisper} (variante \emph{small}); a transcrição é dividida em frases, e cada frase é traduzida pelos tradutores disponíveis, com as glosas exibidas lado a lado. Há duas interfaces: uma página web servida pelo próprio servidor e uma extensão para o Chrome que grava de 10 a 30 segundos do áudio da aba aberta, por exemplo um vídeo no YouTube, e envia o trecho ao servidor. A geração da animação está fora do escopo; a glosa produzida segue o formato do motor de sinalização aberto do VLibras. A Figura~\ref{fig:arq} mostra a arquitetura.
 
-\figura{ht}{0.95}{fig_arquitetura_poc.png}{\caption[Arquitetura da prova de conceito]{\textbf{Arquitetura da prova de conceito.} As duas interfaces (extensão e página web) enviam áudio, vídeo ou texto ao servidor local, que extrai o áudio, transcreve a fala, divide o texto em frases e consulta os tradutores disponíveis. A rede treinada do zero aparece com asterisco porque seu arquivo não foi preservado e ela não está ativa na demonstração.}\label{fig:arq}}
+\figura{!htbp}{\textwidth}{fig_arquitetura_poc.png}{\caption[Arquitetura da prova de conceito]{\textbf{Arquitetura da prova de conceito.} As duas interfaces (extensão e página web) enviam áudio, vídeo ou texto ao servidor local, que extrai o áudio, transcreve a fala, divide o texto em frases e consulta os tradutores disponíveis. A rede treinada do zero aparece com asterisco porque seu arquivo não foi preservado e ela não está ativa na demonstração.}\label{fig:arq}}
 
 % ------------------------------------------------------------------ 4
 \section{Resultados e discussão}
@@ -244,7 +247,7 @@ Para mostrar a aplicação prática, foi implementado um servidor local que rece
 
 A Tabela~\ref{tab:global} e a Figura~\ref{fig:global} trazem as métricas no teste. As regras têm o melhor resultado nas duas métricas; a rede treinada do zero fica 5,9 pontos de BLEU atrás, com apenas 40.000 pares; o PTT5-small com LoRA fica muito abaixo das duas. A distância em chrF é maior que em BLEU para os modelos neurais: as regras quase sempre geram as palavras certas (``conteúdo''), mesmo quando a ordem ou a forma difere da referência, enquanto os modelos neurais às vezes trocam palavras inteiras.
 
-\begin{table}[ht]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \caption{Métricas no conjunto de teste (12.732 pares), global e por domínio.}\label{tab:global}
 \begin{tabular}{@{}lcccccc@{}}\toprule
  & \multicolumn{2}{c}{Global} & \multicolumn{2}{c}{Geral (7.230)} & \multicolumn{2}{c}{Governamental (5.502)}\\
@@ -256,27 +259,29 @@ PTT5-small + LoRA (101.850 pares) & 9,19 & 24,05 & 11,58 & 25,11 & 6,68 & 23,16\
 \end{tabular}
 \end{table}
 
-\figura{ht}{0.8}{fig05_global.png}{\caption[Resultado global]{\textbf{Resultado global no conjunto de teste.} BLEU e chrF (0 a 100) das três abordagens sobre os mesmos 12.732 pares. As regras lideram nas duas métricas; o PTT5-small com LoRA fica abaixo de um terço do resultado das regras.}\label{fig:global}}
+\figura{!htbp}{4.55in}{fig05_global.png}{\caption[Resultado global]{\textbf{Resultado global no conjunto de teste.} BLEU e chrF (0 a 100) das três abordagens sobre os mesmos 12.732 pares. As regras lideram nas duas métricas; o PTT5-small com LoRA alcança cerca de um quarto do BLEU e um terço do chrF das regras.}\label{fig:global}}
 
 \subsection{Treinamento dos modelos neurais}
 
-A Figura~\ref{fig:curvas} mostra a perda durante o treino. Na rede treinada do zero, a melhor validação (3,22) ocorreu na época 7; dali em diante a perda de treino seguiu caindo enquanto a de validação parou de melhorar, sinal de que o modelo passou a memorizar os exemplos, e a parada antecipada encerrou o treino na época 10. No PTT5 com LoRA, a validação caiu de 2,21 para 1,70 de forma lenta e contínua ao longo das 15 épocas, sem estabilizar: o modelo ainda aprendia quando o treino terminou. A perda de treino registrada pelo LoRA não ficou na mesma escala da validação (cerca de 2,4 vezes maior ao fim, compatível com a soma dos dois passos de acumulação de gradiente) e foi omitida para não induzir leitura errada.
+A Figura~\ref{fig:curvas} mostra a perda durante o treino. Na rede treinada do zero, a melhor validação (3,22) ocorreu na época 7; dali em diante a perda de treino seguiu caindo enquanto a de validação parou de melhorar, sinal de que o modelo passou a memorizar os exemplos, e a parada antecipada encerrou o treino na época 10. No PTT5 com LoRA, a validação caiu de 2,21 para 1,70 de forma lenta e contínua ao longo das 15 épocas, sem estabilizar: o modelo ainda aprendia quando o treino terminou. A perda de treino registrada pelo LoRA não ficou na mesma escala da validação (cerca de 2,4 vezes maior ao fim, possivelmente por causa da forma como a perda é acumulada nos dois passos de acumulação de gradiente) e foi omitida para não induzir leitura errada.
 
-\figura{ht}{1}{fig04_curvas_treino.png}{\caption[Curvas de treino]{\textbf{Curvas de treino dos modelos neurais.} À esquerda, perda de treino (tracejada) e de validação (contínua) da rede treinada do zero por época; a linha pontilhada marca a época 7, de menor validação, usada na avaliação. À direita, perda de validação do PTT5-small com LoRA, que ainda caía ao fim das 15 épocas. As escalas dos dois painéis não são comparáveis entre si, pois os vocabulários dos modelos são diferentes.}\label{fig:curvas}}
+\figura{!htbp}{\textwidth}{fig04_curvas_treino.png}{\caption[Curvas de treino]{\textbf{Curvas de treino dos modelos neurais.} À esquerda, perda de treino (tracejada) e de validação (contínua) da rede treinada do zero por época; a linha pontilhada marca a época 7, de menor validação, usada na avaliação. À direita, perda de validação do PTT5-small com LoRA, que ainda caía ao fim das 15 épocas. As escalas dos dois painéis não são comparáveis entre si, pois os vocabulários dos modelos são diferentes.}\label{fig:curvas}}
 
 \subsection{Resultado por domínio}
 
-A hipótese inicial era que as regras iriam melhor nos textos governamentais, mais padronizados. A Figura~\ref{fig:dom} mostra o contrário no BLEU: as regras caem de 36,99 no geral para 30,49 no governamental, enquanto a rede treinada do zero sobe de 26,86 para 29,26 e praticamente empata com as regras nesse domínio. No chrF, porém, as regras vão um pouco \emph{melhor} no governamental (70,64 contra 68,61). A Seção~4.5 mostra que essa aparente contradição se explica pelo comprimento das frases, e não pelo domínio em si.
+A hipótese inicial era que as regras iriam melhor nos textos governamentais, mais padronizados. A Figura~\ref{fig:dom} mostra o contrário no BLEU: as regras caem de 36,99 no geral para 30,49 no governamental, enquanto a rede treinada do zero sobe de 26,86 para 29,26 e praticamente empata com as regras nesse domínio. No chrF, porém, as regras vão um pouco \emph{melhor} no governamental (70,64 contra 68,61). A Seção~4.5 investiga essa aparente contradição.
 
-\figura{ht}{1}{fig06_dominio.png}{\caption[Resultado por domínio]{\textbf{Resultado por domínio do texto de origem.} BLEU (esquerda) e chrF (direita) das três abordagens nas frases de domínio geral (7.230) e governamental (5.502) do teste. No domínio governamental, a rede treinada do zero praticamente empata com as regras em BLEU.}\label{fig:dom}}
+\figura{!htbp}{5.93in}{fig06_dominio.png}{\caption[Resultado por domínio]{\textbf{Resultado por domínio do texto de origem.} BLEU (esquerda) e chrF (direita) das três abordagens nas frases de domínio geral (7.230) e governamental (5.502) do teste. No domínio governamental, a rede treinada do zero praticamente empata com as regras em BLEU.}\label{fig:dom}}
 
 \subsection{Resultado por fenômeno linguístico}
 
 A Tabela~\ref{tab:fen} e a Figura~\ref{fig:fenbleu} detalham o BLEU por fenômeno. Apesar de perder no agregado, a rede treinada do zero supera as regras em duas categorias: interrogação (57,14 contra 45,60, +11,5 pontos) e desambiguação de sentido (30,23 contra 28,52). Ambas dependem do contexto da frase: uma pergunta exige reconhecer a estrutura interrogativa e posicionar o marcador, e a desambiguação exige escolher o sentido certo de uma palavra pelo que está ao redor, o que regras locais fazem mal e um modelo com atenção aprende com exemplos. As regras vencem com folga onde há padrões morfológicos estáveis: numeral (+8,7) e negação fundida (+7,6), que regras capturam diretamente.
 
-O PTT5 com LoRA fica abaixo das duas abordagens em todas as categorias, mas sua ordem relativa é a mesma: vai melhor nas frases com interrogação e exclamação, que tendem a ser curtas, e pior em numeral e verbo direcional.
+Para estimar a incerteza, calculou-se o intervalo de 95\% da média das regras em cada fenômeno por reamostragem (\emph{bootstrap}, 2.000 repetições). Em interrogação, o intervalo é [44,1; 47,2], e em desambiguação, [28,2; 28,8]; os valores da rede (57,14 e 30,23) ficam fora deles. Como as predições da rede não foram preservadas, não é possível calcular o intervalo da diferença; a vantagem em interrogação é grande o bastante para ser tratada como real, e a vantagem em desambiguação deve ser lida como pequena. Os intervalos são mais largos nas categorias raras: em exclamação (100 pares), vão de 44,0 a 53,3.
 
-\begin{table}[ht]\centering\footnotesize
+O PTT5 com LoRA fica abaixo das duas abordagens em todas as categorias, com ordem parecida: vai melhor nas frases com interrogação e exclamação, que tendem a ser curtas, e pior em numeral.
+
+\begin{table}[!htbp]\centering\footnotesize
 \caption{BLEU médio por frase, por fenômeno presente na referência (Dif. = Seq2seq $-$ Regras).}\label{tab:fen}
 \begin{tabular}{@{}lrcccr@{}}\toprule
 Fenômeno & Pares & Regras & Seq2seq & LoRA & Dif.\\\midrule
@@ -292,15 +297,31 @@ Exclamação & 100 & \textbf{48,55} & 47,06 & 32,76 & $-$1,5\\\bottomrule
 \end{tabular}
 \end{table}
 
-\figura{ht}{1}{fig07_fenomenos_bleu.png}{\caption[Resultado por fenômeno]{\textbf{BLEU por fenômeno linguístico.} Média do BLEU por frase nos pares cuja referência contém cada fenômeno (número de pares entre parênteses). Os números acima das barras são a diferença entre a rede treinada do zero e as regras: verde quando a rede vence, vermelho quando perde. A rede supera as regras em interrogação e desambiguação.}\label{fig:fenbleu}}
+\figura{!htbp}{\textwidth}{fig07_fenomenos_bleu.png}{\caption[Resultado por fenômeno]{\textbf{BLEU por fenômeno linguístico.} Média do BLEU por frase nos pares cuja referência contém cada fenômeno (número de pares entre parênteses). Os números acima das barras são a diferença entre a rede treinada do zero e as regras: verde quando a rede vence, vermelho quando perde. A rede supera as regras em interrogação e desambiguação.}\label{fig:fenbleu}}
 
 \subsection{Resultado por comprimento da frase}
 
-Com as predições das regras e do LoRA preservadas, foi possível medir o efeito do comprimento (Tabela~\ref{tab:compr} e Figura~\ref{fig:comprres}). As regras perdem BLEU de forma suave, de 49,4 em frases de até 5 palavras para 27,2 em frases com mais de 40, enquanto o chrF quase não muda (de 72,3 para 68,6). Isso explica o resultado por domínio: o BLEU exige acertar sequências de até quatro glosas na ordem exata, o que fica mais difícil em frases longas, mesmo quando as palavras certas estão lá. Como o domínio governamental tem frases duas vezes mais longas, seu BLEU cai, mas o chrF, que mede o conteúdo, se mantém. O domínio, portanto, não é mais difícil para as regras; as frases é que são mais longas.
+Com as predições das regras e do LoRA preservadas, foi possível medir o efeito do comprimento (Tabela~\ref{tab:compr} e Figura~\ref{fig:comprres}). As regras perdem BLEU de forma suave, de 49,4 em frases de até 5 palavras para 27,2 em frases com mais de 40, enquanto o chrF quase não muda (de 72,3 para 68,6). O BLEU exige acertar sequências de até quatro glosas na ordem exata, o que fica mais difícil em frases longas, mesmo quando as palavras certas estão lá. Como o domínio governamental tem frases duas vezes mais longas, parte de sua queda de BLEU vem daí.
+
+O comprimento, porém, não explica tudo. A Tabela~\ref{tab:domcomp} cruza domínio e comprimento: nas frases curtas, o BLEU das regras é cerca de 11 pontos menor no domínio governamental (39,9 contra 50,7 até 5 palavras), enquanto nas longas os dois domínios se igualam; e o chrF é maior no governamental em todas as faixas. A diferença está nas referências: entre frases de até 10 palavras, 55,5\% das glosas governamentais usam \gl{\&}, contra 26,8\% das gerais, e as regras nunca produzem esse símbolo (Seção~4.6). O chrF, que compara caracteres, ainda casa \gl{BRASIL} com \gl{BRASIL\&PAÍS}; o BLEU, que compara glosas inteiras, não. A queda das regras no domínio governamental combina, portanto, frases mais longas e referências mais marcadas, e não uma piora do conteúdo traduzido. O mesmo fato é compatível com a melhora da rede treinada do zero nesse domínio, já que ela aprende a usar \gl{\&} com os exemplos.
+
+\begin{table}[!htbp]\centering\footnotesize
+\caption{BLEU e chrF das regras por domínio e comprimento da frase em português.}\label{tab:domcomp}
+\begin{tabular}{@{}lrccrcc@{}}\toprule
+ & \multicolumn{3}{c}{Geral} & \multicolumn{3}{c}{Governamental}\\
+\cmidrule(lr){2-4}\cmidrule(l){5-7}
+Palavras & Pares & BLEU & chrF & Pares & BLEU & chrF\\\midrule
+1--5 & 3.713 & 50,65 & 71,54 & 1.115 & 39,90 & 74,40\\
+6--10 & 1.429 & 42,63 & 66,99 & 1.489 & 31,65 & 70,51\\
+11--20 & 821 & 34,22 & 68,69 & 1.590 & 32,33 & 71,20\\
+21--40 & 964 & 29,87 & 67,91 & 1.055 & 29,35 & 70,01\\
+41 ou mais & 303 & 26,85 & 67,61 & 253 & 27,32 & 69,75\\\bottomrule
+\end{tabular}
+\end{table}
 
 O LoRA, ao contrário, desaba com o comprimento: de 23,2 em frases curtas para 0,9 em frases com mais de 40 palavras. A causa aparece na coluna de repetição: a partir de 11 palavras, cerca de 40\% a 46\% das saídas repetem a mesma glosa três ou mais vezes seguidas (no teste todo, 20,1\%). É um padrão típico de um decodificador que não aprendeu bem a língua de saída e entra em ciclo. Apenas 107 saídas (0,84\%) coincidem exatamente com a referência.
 
-\begin{table}[ht]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \caption{BLEU e chrF por comprimento da frase em português, e saídas do LoRA com repetição.}\label{tab:compr}
 \begin{tabular}{@{}lrccccr@{}}\toprule
  & & \multicolumn{2}{c}{Regras} & \multicolumn{2}{c}{PTT5 + LoRA} & \\
@@ -314,23 +335,39 @@ Palavras & Pares & BLEU & chrF & BLEU & chrF & Repetição\\\midrule
 \end{tabular}
 \end{table}
 
-\figura{ht}{1}{fig08_comprimento_resultado.png}{\caption[Resultado por comprimento]{\textbf{Efeito do comprimento da frase.} À esquerda, BLEU das regras e do PTT5-small com LoRA por faixa de número de palavras em português. À direita, percentual de saídas do LoRA em que a mesma glosa se repete três ou mais vezes seguidas. As regras perdem desempenho de forma gradual; o LoRA entra em repetição a partir de 11 palavras.}\label{fig:comprres}}
+\figura{!htbp}{\textwidth}{fig08_comprimento_resultado.png}{\caption[Resultado por comprimento]{\textbf{Efeito do comprimento da frase.} À esquerda, BLEU das regras e do PTT5-small com LoRA por faixa de número de palavras em português. À direita, percentual de saídas do LoRA em que a mesma glosa se repete três ou mais vezes seguidas. As regras perdem desempenho de forma gradual; o LoRA entra em repetição a partir de 11 palavras.}\label{fig:comprres}}
 
 \subsection{Análise de erros}
 
 As predições preservadas permitem ver \emph{como} cada abordagem erra (Figura~\ref{fig:erros}). O padrão das regras é claro: nenhuma das 12.732 saídas contém o símbolo de desambiguação \gl{\&} nem verbos direcionais com marcação de pessoa, embora a referência use \gl{\&} em 56,5\% das frases e verbos direcionais em 5,4\%. A negação fundida aparece em 4,9\% das saídas, contra 10,3\% na referência. Ou seja, as regras não produzem justamente as marcas que dependem de escolher o sentido da palavra ou de interpretar quem age sobre quem, o que explica por que a rede treinada com exemplos as supera em desambiguação.
 
-O segundo padrão das regras é o excesso: suas saídas têm, em média, 10,4 glosas, contra 8,5 da referência, e são mais longas que a referência em 69,6\% das frases. As palavras que mais aparecem na saída das regras sem constar da referência são \gl{SER} (3.340 vezes), \gl{1} (2.210), \gl{PARA} (2.044), \gl{QUE} (2.024), \gl{COM} (1.366) e \gl{ESTAR} (1.193): verbos de ligação, preposições e conjunções que a Libras normalmente omite, e o artigo ``um'' convertido em numeral. Quando a frase em português tem ``um'' ou ``uma'' e a referência não tem o numeral, as regras produzem \gl{1} em 95,4\% dos casos. São erros sistemáticos e, por isso, corrigíveis com poucas regras adicionais.
+O segundo padrão das regras é o excesso: suas saídas têm, em média, 10,4 glosas, contra 8,5 da referência, e são mais longas que a referência em 69,6\% das frases. As palavras que mais aparecem na saída das regras sem constar da referência são \gl{SER} (3.340 vezes), \gl{1} (2.210), \gl{PARA} (2.044), \gl{QUE} (2.024), \gl{COM} (1.366) e \gl{ESTAR} (1.193): verbos de ligação, preposições e conjunções que a Libras normalmente omite, e o artigo ``um'' convertido em numeral. Quando a frase em português tem ``um'' ou ``uma'' e a referência não tem o numeral, as regras produzem \gl{1} em 95,4\% dos casos. São erros sistemáticos e, em princípio, corrigíveis com poucas regras adicionais, o que a Seção~4.7 testa.
 
 O LoRA erra no sentido oposto. Produz \gl{\&} com frequência ainda maior que a referência (68,6\%), sinal de que aprendeu o formato da glosa, mas não quando usá-lo; suas saídas são curtas (5,4 glosas em média), o que aciona a penalidade de brevidade do BLEU; e acerta o marcador final da frase em apenas 57,9\% dos casos, contra 92,3\% das regras.
 
-\figura{ht}{0.98}{fig10_erros.png}{\caption[Análise de erros]{\textbf{Marcas da glosa e comprimento das saídas.} À esquerda, percentual de frases do teste em que a glosa contém cada marca: na referência, na saída das regras e na saída do PTT5-small com LoRA. À direita, número médio de glosas por frase. As regras nunca geram desambiguação nem verbos direcionais e produzem saídas mais longas que a referência; o LoRA usa marcas em excesso e produz saídas curtas.}\label{fig:erros}}
+\figura{!htbp}{5.86in}{fig10_erros.png}{\caption[Análise de erros]{\textbf{Marcas da glosa e comprimento das saídas.} À esquerda, percentual de frases do teste em que a glosa contém cada marca: na referência, na saída das regras e na saída do PTT5-small com LoRA. À direita, número médio de glosas por frase. As regras nunca geram desambiguação nem verbos direcionais e produzem saídas mais longas que a referência; o LoRA usa marcas em excesso e produz saídas curtas.}\label{fig:erros}}
+
+\subsection{Correção simples das regras}
+
+Para medir quanto desses erros é recuperável sem treinar nada, aplicou-se às saídas das regras um pós-processamento de três passos: remover \gl{SER}, remover \gl{ESTAR} e remover \gl{1} quando a frase em português não contém esse algarismo. A Tabela~\ref{tab:pos} mostra o efeito. O BLEU global subiu de 33,98 para 35,57 e o chrF, de 69,71 para 70,63, com ganho maior no domínio geral, de frases curtas.
+
+\begin{table}[!htbp]\centering\footnotesize
+\caption{Efeito do pós-processamento das saídas das regras (BLEU de corpus no teste).}\label{tab:pos}
+\begin{tabular}{@{}lccc@{}}\toprule
+ & Global & Geral & Governamental\\\midrule
+Regras & 33,98 & 36,99 & 30,49\\
+Regras + pós-processamento & \textbf{35,57} & \textbf{39,46} & \textbf{31,31}\\
+Ganho & +1,59 & +2,47 & +0,82\\\bottomrule
+\end{tabular}
+\end{table}
+
+O resultado deve ser lido com cuidado: as palavras removidas foram escolhidas olhando o próprio conjunto de teste, de modo que o ganho é uma estimativa otimista. Ele mostra, ainda assim, a ordem de grandeza do que uma manutenção leve das regras pode render, sem dados de treino nem GPU. As marcas que as regras não geram (\gl{\&} e verbos direcionais) não se resolvem dessa forma, pois exigem decidir o sentido e os participantes a partir do contexto.
 
 \subsection{Exemplos}
 
 A Tabela~\ref{tab:ex} mostra frases do teste. As regras produzem glosas plausíveis, mas literais: mantêm palavras que a referência omite (\gl{ESTE}, \gl{SER}, \gl{IR}), tratam o artigo ``um'' como numeral (\gl{1}) e não aplicam as marcas de desambiguação e de verbo direcional da referência. O LoRA preserva a estrutura geral (início, marcador final), mas troca o conteúdo e, nas frases longas, entra em repetição.
 
-\begin{table}[ht]\centering\scriptsize
+\begin{table}[!htbp]\centering\scriptsize
 \caption{Exemplos do conjunto de teste (Ref. = glosa de referência).}\label{tab:ex}
 \begin{tabularx}{\textwidth}{@{}l>{\sffamily}X@{}}\toprule
 \multicolumn{2}{@{}l}{\textbf{Este quarto está uma bagunça.}}\\
@@ -356,11 +393,11 @@ LoRA & ANO\&DATA 1912 CONSULTAR\&PESQUISAR CONTRA\&CONTRAÇÃO PODER\&POSSIBILID
 
 A Figura~\ref{fig:poc} mostra a interface da prova de conceito processando um arquivo de fala. O servidor rodou em Linux sem GPU, com regras e LoRA carregados (o arquivo da rede treinada do zero não foi preservado). Um trecho com três frases foi transcrito e traduzido em 13,5 segundos. As saídas repetem, em pequena escala, o padrão medido: as regras acertam inclusive a negação fundida (\gl{NÃO\_VER}); o LoRA mantém estrutura e marcadores, mas troca conteúdo (\gl{BOM ANO\&DATA} para ``Bom dia''). A mesma rota funciona com o áudio gravado pela extensão no navegador, em formato WebM.
 
-\figura{ht}{0.8}{fig09_poc.png}{\caption[Prova de conceito]{\textbf{Interface da prova de conceito.} O usuário envia um arquivo de áudio ou vídeo; o Whisper transcreve a fala, o texto é dividido em frases e cada frase aparece com a glosa das regras e do PTT5-small com LoRA, lado a lado. O tempo total (13,5 s para três frases) inclui transcrição e tradução em CPU.}\label{fig:poc}}
+\figura{!htbp}{4.6in}{fig09_poc.png}{\caption[Prova de conceito]{\textbf{Interface da prova de conceito.} O usuário envia um arquivo de áudio ou vídeo; o Whisper transcreve a fala, o texto é dividido em frases e cada frase aparece com a glosa das regras e do PTT5-small com LoRA, lado a lado. O tempo total (13,5 s para três frases) inclui transcrição e tradução em CPU.}\label{fig:poc}}
 
 \subsection{Discussão}
 
-Três lições se destacam. A primeira é que regras bem construídas continuam sendo uma linha de base difícil de bater: sem nenhum dado de treino, o \gl{vlibras-translate} lidera no agregado e degrada pouco em frases longas. A segunda é que o número agregado esconde diferenças que importam para a aplicação: uma rede simples, treinada com 40\% dos dados em CPU, já vence as regras em perguntas e em desambiguação, e um sistema de atendimento ao público, cheio de perguntas, poderia preferi-la. A terceira é que um modelo pré-treinado não garante, por si só, melhor resultado. Na configuração testada, o PTT5-small com LoRA ficou muito abaixo; as causas prováveis são a taxa de aprendizado baixa para LoRA ($10^{-4}$, quando valores próximos de $10^{-3}$ são comuns), a adaptação restrita a duas projeções da atenção em um modelo pequeno, a validação que ainda caía ao fim do treino e a forma do texto de saída: glosas em maiúsculas com marcadores como \gl{[PONTO]} são fragmentadas pelo vocabulário do PTT5, pré-treinado em texto comum, em muitas subpalavras.
+Três lições se destacam. A primeira é que regras bem construídas continuam sendo uma linha de base difícil de bater: sem nenhum dado de treino, o \gl{vlibras-translate} lidera no agregado e degrada pouco em frases longas. A segunda é que o número agregado esconde diferenças que importam para a aplicação: uma rede simples, treinada com 40\% dos dados em CPU, já vence as regras em perguntas, e um sistema de atendimento ao público, cheio de perguntas, poderia preferi-la. A terceira é que um modelo pré-treinado não garante, por si só, melhor resultado. Na configuração testada, o PTT5-small com LoRA ficou muito abaixo. As hipóteses, a verificar em novos experimentos, são: uma taxa de aprendizado conservadora ($10^{-4}$), sem busca de hiperparâmetros; a adaptação restrita a duas projeções da atenção em um modelo pequeno; a validação que ainda caía ao fim do treino; e a distância entre a glosa, em maiúsculas e com marcadores como \gl{[PONTO]}, e o texto comum usado no pré-treino do PTT5.
 
 Nenhum resultado autoriza o uso de tradução automática sem revisão em contextos sensíveis. Mesmo o melhor BLEU indica que boa parte das glosas difere da referência, e as métricas não medem compreensão.
 
@@ -368,20 +405,20 @@ Nenhum resultado autoriza o uso de tradução automática sem revisão em contex
 
 Os recortes por fenômeno, domínio e comprimento permitem traduzir os resultados em recomendações para quem precisa escolher uma abordagem hoje (Tabela~\ref{tab:recom}). Elas valem para a configuração e os dados deste estudo e devem ser revistas quando houver avaliação com pessoas surdas.
 
-\begin{table}[ht]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \caption{Abordagem indicada por cenário de uso, segundo os resultados deste trabalho.}\label{tab:recom}
 \begin{tabularx}{\textwidth}{@{}XlX@{}}\toprule
 Cenário & Indicação & Evidência\\\midrule
 Uso geral, sem dados nem GPU & Regras & maior BLEU e chrF globais; degradação suave com o comprimento\\
 Atendimento com muitas perguntas & Seq2seq treinado & +11,5 BLEU em interrogação\\
-Textos com palavras ambíguas & Seq2seq treinado & único que supera as regras em desambiguação; regras nunca geram \gl{\&}\\
+Textos com palavras ambíguas & Seq2seq treinado & regras nunca geram \gl{\&}; vantagem pequena (+1,7)\\
 Textos longos (governamentais) & Regras & BLEU 27,2 acima de 40 palavras; LoRA cai para 0,9\\
-Melhoria de baixo custo das regras & Regras + pós-processamento & \gl{SER}, \gl{1}, \gl{PARA}, \gl{QUE} sobram em milhares de saídas\\
+Melhoria de baixo custo das regras & Regras + pós-processamento & +1,59 BLEU removendo \gl{SER}, \gl{ESTAR} e \gl{1} espúrio\\
 Modelo pré-treinado com LoRA & Não usar sem novo ajuste & BLEU 9,19; 20,1\% de saídas com repetição\\\bottomrule
 \end{tabularx}
 \end{table}
 
-Uma combinação também é possível: usar as regras como padrão e encaminhar ao modelo treinado as frases interrogativas, ou aplicar ao resultado das regras um pós-processamento que remova verbos de ligação e o numeral espúrio. Nenhuma dessas combinações foi avaliada aqui, mas os números indicam onde elas teriam mais efeito.
+Uma combinação também é possível: usar as regras, com o pós-processamento da Seção~4.7, como padrão e encaminhar ao modelo treinado as frases interrogativas. Essa combinação não foi avaliada aqui, mas os números indicam onde ela teria mais efeito.
 
 \subsection{Lições de engenharia}
 
@@ -396,7 +433,7 @@ Parte do esforço do trabalho não aparece nas métricas, mas condiciona a repro
 % ------------------------------------------------------------------ 5
 \section{Conclusão}
 
-Este trabalho comparou três formas de traduzir português para glosa em Libras sob o mesmo protocolo, no corpus público VLibrasBD. As regras do \gl{vlibras-translate} foram as melhores no agregado (BLEU 33,98; chrF 69,71); a rede sequência a sequência treinada do zero, com 40.000 pares e sem GPU, chegou a 28,08 e superou as regras em perguntas e desambiguação; o PTT5-small com LoRA, na configuração adotada, ficou em 9,19, com repetição frequente em frases longas. A análise por comprimento mostrou que a queda das regras no domínio governamental vem das frases mais longas, não do domínio. A prova de conceito mostrou que o fluxo de vídeo ou áudio até glosa funciona com recursos modestos.
+Este trabalho comparou três formas de traduzir português para glosa em Libras sob o mesmo protocolo, no corpus público VLibrasBD. As regras do \gl{vlibras-translate} foram as melhores no agregado (BLEU 33,98; chrF 69,71); a rede sequência a sequência treinada do zero, com 40.000 pares e sem GPU, chegou a 28,08 e superou as regras em perguntas e desambiguação; o PTT5-small com LoRA, na configuração adotada, ficou em 9,19, com repetição frequente em frases longas. A queda das regras no domínio governamental vem de frases mais longas e de referências com mais marcas de desambiguação, que elas nunca produzem; um pós-processamento de três passos eleva seu BLEU para 35,57. A prova de conceito mostrou que o fluxo de vídeo ou áudio até glosa funciona com recursos modestos.
 
 \textbf{Limitações.} A rede treinada do zero usou 40\% dos dados de treino, e o LoRA, todos; o LoRA foi avaliado em uma única configuração, sem busca de hiperparâmetros; cada modelo foi treinado uma vez, sem sementes diferentes nem intervalos de confiança, o que pesa nas categorias com poucos pares; a avaliação usou apenas métricas automáticas e uma referência por frase, cuja origem (manual ou gerada por pipeline) não foi verificada; o arquivo e as predições da rede treinada do zero não foram preservados; e a glosa não representa marcações não manuais nem todo o uso do espaço.
 
@@ -415,7 +452,7 @@ Código, notebooks de treino, amostra dos dados, predições do teste, figuras e
 
 \bibitem{handtalk} HAND TALK. \textbf{Hand Talk}: tradução automática para línguas de sinais. [\emph{S. l.}]: Hand Talk Tecnologia, 2026. Disponível em: \url{https://www.handtalk.me}. Acesso em: 17 nov. 2026.
 
-\bibitem{lima2025} LIMA, M. A. \emph{et al}. VLibrasBD: a Brazilian Portuguese--Brazilian Sign Language (Libras) bilingual text dataset designed to support neural machine translation. \textbf{Data in Brief}, v. 62, 111911, 2025.
+\bibitem{lima2025} LIMA, M. A. C. B. \emph{et al}. VLibrasBD: a Brazilian Portuguese--Brazilian Sign Language (Libras) bilingual text dataset designed to support neural machine translation. \textbf{Data in Brief}, v. 62, 111911, 2025.
 
 \bibitem{muller} MÜLLER, M.; JIANG, Z.; MORYOSSEF, A.; RIOS, A.; EBLING, S. Considerations for meaningful sign language machine translation based on glosses. In: ANNUAL MEETING OF THE ASSOCIATION FOR COMPUTATIONAL LINGUISTICS, 61., 2023, Toronto. \textbf{Proceedings} [...]. ACL, 2023. v. 2, p. 682-693. DOI: 10.18653/v1/2023.acl-short.60.
 
@@ -429,7 +466,7 @@ Código, notebooks de treino, amostra dos dados, predições do teste, figuras e
 
 \bibitem{t5} RAFFEL, C. \emph{et al}. Exploring the limits of transfer learning with a unified text-to-text transformer. \textbf{Journal of Machine Learning Research}, v. 21, n. 140, p. 1-67, 2020.
 
-\bibitem{ptt5} CARMO, D. \emph{et al}. PTT5: pretraining and validating the T5 model on Brazilian Portuguese data. \textbf{arXiv}, arXiv:2008.09144, 2020.
+\bibitem{ptt5} CARMO, D. \emph{et al}. PTT5: pretraining and validating the T5 model on Brazilian Portuguese data. \textbf{arXiv}, arXiv:2008.09144, 2020. Disponível em: \url{https://arxiv.org/abs/2008.09144}. Acesso em: 22 nov. 2026.
 
 \bibitem{lora} HU, E. J. \emph{et al}. LoRA: low-rank adaptation of large language models. In: INTERNATIONAL CONFERENCE ON LEARNING REPRESENTATIONS, 10., 2022. \textbf{Proceedings} [...]. ICLR, 2022.
 
