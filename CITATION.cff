@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "Se usar este material, cite-o como abaixo."
+title: "libras-tcc: tradução automática de português para glosa em Libras"
+authors:
+  - family-names: Sbrana
+    given-names: Gabriel
+version: v1.0-tcc
+date-released: 2026-11-23
+license: MIT
+repository-code: "https://github.com/gabrielsbrana/libras-tcc"
+abstract: >-
+  Código, predições, adaptador LoRA e prova de conceito do TCC do MBA em
+  Ciência de Dados da UNIFOR que compara regras linguísticas (vlibras-translate),
+  uma rede sequência a sequência treinada do zero e o PTT5-small ajustado com
+  LoRA na tradução de português para glosa em Libras, sobre o corpus VLibrasBD.
+keywords:
+  - Libras
+  - glosa
+  - tradução automática
+  - LoRA
+  - VLibrasBD

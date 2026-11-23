@@ -18,19 +18,22 @@ geradas em 16/11/2026 e reproduzíveis com `src/avaliar_predicoes.py`.
 
 ## BLEU por categoria linguística
 
-Cada linha usa só os pares cuja glosa de referência contém o fenômeno.
+Cada linha usa só os pares cuja glosa de referência contém o fenômeno. Métrica: média do
+BLEU por sentença (mesmo cálculo do `evaluate.py` original para regras e seq2seq; para o LoRA,
+reproduzível com `src/avaliar_predicoes.py`). Versões anteriores deste arquivo traziam, na coluna
+do LoRA, o BLEU de conjunto (8,69; 6,50; ...), que não é comparável com as outras colunas.
 
 | Categoria | Pares | Regras | Seq2seq | LoRA |
 | --- | --- | --- | --- | --- |
-| Marcador de ponto final | 9.310 | 39,41 | 38,37 | 8,69 |
-| Desambiguação de sentido | 7.197 | 28,52 | 30,23 | 6,50 |
-| Sinal composto | 2.562 | 35,47 | 30,18 | 7,23 |
-| Numeral | 2.005 | 27,18 | 18,48 | 6,15 |
-| Negação fundida ao verbo | 1.316 | 38,85 | 31,24 | 8,30 |
-| Interrogação | 848 | 45,60 | 57,14 | 23,44 |
-| Verbo direcional | 700 | 20,27 | 18,57 | 6,45 |
-| Negação isolada | 379 | 30,86 | 29,74 | 5,78 |
-| Exclamação | 100 | 48,55 | 47,06 | 14,36 |
+| Marcador de ponto final | 9.310 | 39,41 | 38,37 | 18,78 |
+| Desambiguação de sentido | 7.197 | 28,52 | 30,23 | 11,55 |
+| Sinal composto | 2.562 | 35,47 | 30,18 | 15,70 |
+| Numeral | 2.005 | 27,18 | 18,48 | 9,72 |
+| Negação fundida ao verbo | 1.316 | 38,85 | 31,24 | 19,02 |
+| Interrogação | 848 | 45,60 | 57,14 | 31,54 |
+| Verbo direcional | 700 | 20,27 | 18,57 | 11,18 |
+| Negação isolada | 379 | 30,86 | 29,74 | 16,75 |
+| Exclamação | 100 | 48,55 | 47,06 | 32,76 |
 
 A categoria Numeral inclui os 700 pares com verbo direcional, porque o padrão
 `\d` também casa com os marcadores de pessoa (`1S_`, `2S_`); 615 dos 2.005 pares

@@ -59,7 +59,8 @@ ax.set_xticks(x); ax.set_xticklabels(['BLEU','chrF']); ax.set_ylim(0,90); ax.set
 fig.tight_layout(); fig.savefig('results/figuras/f_global.png'); plt.close()
 
 # F8 category
-rows=[('Ponto final',39.41,38.37,8.69),('Desambiguação',28.52,30.23,6.50),('Sinal composto',35.47,30.18,7.23),('Numeral',27.18,18.48,6.15),('Negação fundida',38.85,31.24,8.30),('Interrogação',45.60,57.14,23.44),('Verbo direcional',20.27,18.57,6.45),('Negação isolada',30.86,29.74,5.78),('Exclamação',48.55,47.06,14.36)]
+# BLEU médio por sentença nas três colunas (TCC, Tabela 6)
+rows=[('Ponto final',39.41,38.37,18.78),('Desambiguação',28.52,30.23,11.55),('Sinal composto',35.47,30.18,15.70),('Numeral',27.18,18.48,9.72),('Negação fundida',38.85,31.24,19.02),('Interrogação',45.60,57.14,31.54),('Verbo direcional',20.27,18.57,11.18),('Negação isolada',30.86,29.74,16.75),('Exclamação',48.55,47.06,32.76)]
 w=.27
 fig,ax=plt.subplots(figsize=(8.6,4.4))
 x=np.arange(len(rows)); 

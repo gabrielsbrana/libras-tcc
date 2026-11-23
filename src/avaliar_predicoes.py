@@ -41,12 +41,17 @@ def main():
     b, c = metricas(refs, hips)
     print(f"GLOBAL  n={len(refs)}  BLEU={b}  chrF={c}")
 
+    # No TCC (Tabela 6), o BLEU por categoria é a MÉDIA DO BLEU POR SENTENÇA, mesmo critério
+    # do evaluate.py original usado para regras e seq2seq. O BLEU de conjunto aparece só como
+    # referência: as duas medidas não são comparáveis entre si (ver Seção 2.6 do TCC).
     print("\nPor categoria (referência contém o fenômeno):")
     marcas = [categorias_presentes(r) for r in refs]
     for nome in CATEGORIAS:
         idx = [i for i, m in enumerate(marcas) if m[nome]]
         b, c = metricas([refs[i] for i in idx], [hips[i] for i in idx])
-        print(f"  {ROTULOS[nome]:<28} n={len(idx):>5}  BLEU={b:>6}  chrF={c:>6}")
+        media = sum(sacrebleu.sentence_bleu(hips[i], [refs[i]]).score for i in idx) / len(idx)
+        print(f"  {ROTULOS[nome]:<28} n={len(idx):>5}  BLEU médio por sentença={media:>6.2f}"
+              f"  (BLEU de conjunto={b:>6}, chrF={c:>6})")
 
     print("\nPor domínio:")
     gov = df["is_government_source"].astype(str).str.lower().eq("true").tolist()
