@@ -1,0 +1,3 @@
+modelo,BLEU,chrF
+Regras (VLibras),33.98,69.71
+Seq2seq (do zero),28.08,50.67

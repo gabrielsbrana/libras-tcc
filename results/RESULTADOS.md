@@ -4,9 +4,19 @@ Conjunto de teste: 12.732 pares (7.230 do domínio geral, 5.502 do governamental
 BLEU e chrF calculados com SacreBLEU após `normalizar_glosa()` (`src/text_utils.py`)
 aplicada à referência e à hipótese.
 
-Fontes: regras e seq2seq, saída do `evaluate.py` original (agosto de 2026; as
-predições individuais não foram preservadas). LoRA, `results/predictions_lora_test.csv`,
-geradas em 16/11/2026 e reproduzíveis com `src/avaliar_predicoes.py`.
+Fontes, todas na mesma ordem do conjunto de teste e reproduzíveis com
+`src/avaliar_predicoes.py`:
+
+- Regras e seq2seq: `results/predictions_completas.csv` (colunas `glosa_pred_regras` e
+  `glosa_pred_seq2seq`), gerado pelo `evaluate.py` original em agosto de 2026. As métricas
+  e o gráfico que ele gravou na época estão em `results/originais/`.
+- LoRA: `results/predictions_lora_test.csv`, geradas em 16/11/2026.
+
+```bash
+python src/avaliar_predicoes.py results/predictions_completas.csv --coluna glosa_pred_regras
+python src/avaliar_predicoes.py results/predictions_completas.csv --coluna glosa_pred_seq2seq
+python src/avaliar_predicoes.py results/predictions_lora_test.csv --coluna glosa_pred_lora
+```
 
 ## Global
 
@@ -71,3 +81,26 @@ Repetição: a mesma glosa três ou mais vezes seguidas. No total, 2.555 saídas
 | Tempo | cerca de 40 min por época | 9.189 s |
 
 O histórico completo do LoRA está em `lora_training_history.csv`.
+
+## Três abordagens por comprimento da frase em português (BLEU / chrF)
+
+| Palavras | Pares | Regras | Seq2seq | LoRA |
+| --- | --- | --- | --- | --- |
+| 1 a 5 | 4.828 | 49,39 / 72,25 | 55,11 / 71,53 | 23,16 / 40,05 |
+| 6 a 10 | 2.918 | 37,92 / 69,13 | 42,27 / 64,98 | 16,31 / 32,70 |
+| 11 a 20 | 2.411 | 33,06 / 70,39 | 29,59 / 56,46 | 7,89 / 24,64 |
+| 21 a 40 | 2.019 | 29,68 / 69,08 | 19,40 / 44,77 | 2,88 / 18,43 |
+| 41 ou mais | 556 | 27,22 / 68,62 | 9,09 / 25,92 | 0,86 / 12,82 |
+
+## Padrões das saídas
+
+| Indicador | Regras | Seq2seq | LoRA | Referência |
+| --- | --- | --- | --- | --- |
+| Saídas idênticas à referência | 1.010 (7,9%) | 1.669 (13,1%) | 107 (0,8%) | – |
+| Comprimento da saída / referência | 1,23 | 0,84 | 0,63 | 1,00 |
+| Sentenças com `&` | 0,0% | 47,0% | 68,6% | 56,5% |
+| Sentenças com verbo direcional | 0,0% | 0,5% | 1,8% | 5,5% |
+| Sentenças com `NÃO_` | 4,9% | 8,4% | 11,2% | 10,3% |
+| Mesma glosa repetida 3+ vezes | 0,0% | 8,5% | 20,1% | – |
+| Glosas fora do vocabulário das referências (val + teste) | 10,7% | 15,8% | 15,0% | – |
+

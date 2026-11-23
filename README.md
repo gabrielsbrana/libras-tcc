@@ -33,7 +33,7 @@ entre si; a Seção 2.6 do TCC explica a diferença.
 | Pasta | Conteúdo |
 | --- | --- |
 | `tcc/` | Texto do TCC em Word e PDF |
-| `results/` | Métricas consolidadas, predições do LoRA no teste, histórico de treino e figuras |
+| `results/` | Métricas consolidadas, predições das três abordagens no teste, histórico de treino, figuras e saídas originais do `evaluate.py` (`originais/`) |
 | `src/` | Normalização e categorias (`text_utils.py`), avaliação (`avaliar_predicoes.py`) e figuras (`gerar_figuras.py`) |
 | `notebooks/` | Treino do LoRA no Colab (com as saídas da execução) e avaliação no teste |
 | `models/lora_adapter/` | Adaptador LoRA treinado (4,6 MB), sobre `unicamp-dl/ptt5-small-portuguese-vocab` |
@@ -52,15 +52,15 @@ cd libras-tcc
 pip install -r requirements.txt
 ```
 
-**1. Números do LoRA a partir das predições salvas** (sem GPU, cerca de 1 minuto).
-Reproduz a linha do LoRA nas Tabelas 5, 6, 7 e 10 do TCC:
+**1. Todas as métricas a partir das predições salvas** (sem GPU, cerca de 1 minuto
+cada). As predições das três abordagens sobre o conjunto de teste estão em `results/`
+e reproduzem os números do TCC (global, por categoria, por domínio e por comprimento):
 
 ```bash
-python src/avaliar_predicoes.py results/predictions_lora_test.csv --coluna glosa_pred_lora
+python src/avaliar_predicoes.py results/predictions_completas.csv --coluna glosa_pred_regras   # BLEU 33.98, chrF 69.71
+python src/avaliar_predicoes.py results/predictions_completas.csv --coluna glosa_pred_seq2seq  # BLEU 28.08, chrF 50.67
+python src/avaliar_predicoes.py results/predictions_lora_test.csv --coluna glosa_pred_lora     # BLEU 9.19,  chrF 24.05
 ```
-
-Saída esperada: `GLOBAL n=12732 BLEU=9.19 chrF=24.05`, seguida dos recortes por
-categoria, domínio e comprimento.
 
 **2. Gerar de novo as predições do LoRA** com o adaptador de `models/lora_adapter/`:
 abra `notebooks/avaliacao_lora_colab.ipynb` no Google Colab (GPU T4) e envie
@@ -79,8 +79,8 @@ cerca de 2 h 33 min). Precisa da divisão em `data/processed/` (ver
 O código original de preparação dos dados, da linha de base por regras, do
 treino do seq2seq e da avaliação conjunta (`data_prep.py`, `baseline_regras.py`,
 `seq2seq_model.py`, `evaluate.py`) e o checkpoint do seq2seq não foram
-preservados. Dessas abordagens restam as métricas, registradas no TCC e em
-`results/RESULTADOS.md`. A configuração do seq2seq está descrita na Seção 3.5 do
+preservados. As predições dessas abordagens foram preservadas e reproduzem todas
+as métricas. A configuração do seq2seq está descrita na Seção 3.5 do
 texto, e a da linha de base, na Seção 3.4.
 
 ## Licenças
@@ -89,7 +89,7 @@ texto, e a da linha de base, na Seção 3.4.
 - Adaptador LoRA: derivado de `unicamp-dl/ptt5-small-portuguese-vocab`; vale também
   a licença do modelo base.
 - Corpus VLibrasBD: CC BY-SA 4.0, distribuído pelos autores no Mendeley Data. Não
-  está versionado aqui; as predições em `results/` contêm frases e glosas do
+  está versionado aqui; os arquivos de predições em `results/` contêm frases e glosas do
   conjunto de teste e seguem a mesma licença.
 - `vlibras-translate`: LGPLv3, instalado do PyPI.
 
@@ -97,7 +97,7 @@ texto, e a da linha de base, na Seção 3.4.
 
 ```
 G. Sbrana, "libras-tcc: tradução automática de português para glosa em Libras,"
-GitHub, versão v1.0-tcc, 2026. [Online]. Disponível em:
+GitHub, versão v1.1-tcc, 2026. [Online]. Disponível em:
 https://github.com/gabrielsbrana/libras-tcc
 ```
 

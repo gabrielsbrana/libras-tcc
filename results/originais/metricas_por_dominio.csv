@@ -1,0 +1,3 @@
+dominio,n_pares,BLEU_regras,chrF_regras,BLEU_seq2seq,chrF_seq2seq
+Geral,7230,36.99,68.61,26.86,44.46
+Governamental,5502,30.49,70.64,29.26,55.81

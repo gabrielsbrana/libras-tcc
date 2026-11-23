@@ -4,7 +4,7 @@ title: "libras-tcc: tradução automática de português para glosa em Libras"
 authors:
   - family-names: Sbrana
     given-names: Gabriel
-version: v1.0-tcc
+version: v1.1-tcc
 date-released: 2026-11-23
 license: MIT
 repository-code: "https://github.com/gabrielsbrana/libras-tcc"

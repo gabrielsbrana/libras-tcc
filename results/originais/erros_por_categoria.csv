@@ -1,0 +1,10 @@
+categoria,n_pares,BLEU_regras,BLEU_seq2seq
+marcador_ponto,9310,39.41,38.37
+desambiguacao_amp,7197,28.52,30.23
+composto_underscore,2562,35.47,30.18
+numeral,2005,27.18,18.48
+negacao_fundida,1316,38.85,31.24
+interrogacao,848,45.6,57.14
+verbo_direcional,700,20.27,18.57
+negacao_isolada,379,30.86,29.74
+exclamacao,100,48.55,47.06

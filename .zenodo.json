@@ -1,0 +1,14 @@
+{
+  "title": "libras-tcc: tradução automática de português para glosa em Libras",
+  "upload_type": "software",
+  "description": "Código, predições das três abordagens sobre o conjunto de teste, adaptador LoRA e prova de conceito do TCC do MBA em Ciência de Dados da Universidade de Fortaleza (UNIFOR), 2026. O trabalho compara regras linguísticas (vlibras-translate), uma rede sequência a sequência treinada do zero e o PTT5-small ajustado com LoRA na tradução de português para glosa em Libras, sobre o corpus VLibrasBD.",
+  "creators": [
+    {"name": "Sbrana, Gabriel", "affiliation": "Universidade de Fortaleza (UNIFOR)"}
+  ],
+  "license": "MIT",
+  "language": "por",
+  "keywords": ["Libras", "glosa", "tradução automática", "LoRA", "VLibrasBD", "seq2seq"],
+  "related_identifiers": [
+    {"identifier": "10.17632/ryj88ckjww.1", "relation": "references", "scheme": "doi", "resource_type": "dataset"}
+  ]
+}
