@@ -20,9 +20,9 @@ fenômeno e por comprimento são geradas por `tcc/latex/gerar_figuras_artigo.py`
 ## BLEU por categoria linguística
 
 Cada linha usa só os pares cuja glosa de referência contém o fenômeno. Métrica: média do
-BLEU por sentença (mesmo cálculo do `evaluate.py` original para regras e seq2seq). Versões
-anteriores deste arquivo traziam, para o LoRA, o BLEU de corpus (8,69; 6,50; ...), que não
-é comparável com as outras colunas.
+BLEU por sentença (mesmo cálculo do `evaluate.py` original para regras e seq2seq; para o LoRA,
+reproduzível com `src/avaliar_predicoes.py`). Versões anteriores deste arquivo traziam, na coluna
+do LoRA, o BLEU de conjunto (8,69; 6,50; ...), que não é comparável com as outras colunas.
 
 | Categoria | Pares | Regras | Seq2seq | LoRA |
 | --- | --- | --- | --- | --- |

@@ -19,10 +19,14 @@ Libras, a representação textual usada antes da sinalização por avatar:
 | PTT5-small + LoRA | 101.850 | 9,19 | 24,05 |
 
 As regras lideram no agregado. O seq2seq já as supera em interrogação (BLEU
-57,14 contra 45,60) e em desambiguação de sentido (30,23 contra 28,52). O LoRA
-degenera em frases longas: 20,1% das saídas repetem a mesma glosa três ou mais
-vezes. Detalhes por categoria, domínio e comprimento em
+médio por sentença de 57,14 contra 45,60) e em desambiguação de sentido (30,23
+contra 28,52). O LoRA degenera em frases longas: 20,1% das saídas repetem a mesma
+glosa três ou mais vezes. Detalhes por categoria, domínio e comprimento em
 [`results/RESULTADOS.md`](results/RESULTADOS.md).
+
+BLEU global e por domínio são de conjunto (corpus BLEU do SacreBLEU). BLEU por
+categoria é a média do BLEU por sentença. As duas medidas não são comparáveis
+entre si; a Seção 2.6 do TCC explica a diferença.
 
 ## Estrutura
 
@@ -39,33 +43,74 @@ vezes. Detalhes por categoria, domínio e comprimento em
 
 ## Reproduzir
 
+Requisitos: Python 3.10 ou superior. A linha de base por regras exige também
+Linux (ou WSL), Java 8 e `nltk<3.8.2`; detalhes em [`demo/README.md`](demo/README.md).
+
 ```bash
+git clone https://github.com/gabrielsbrana/libras-tcc.git
+cd libras-tcc
 pip install -r requirements.txt
-
-# Métricas do LoRA a partir das predições salvas (não precisa de GPU)
-python src/avaliar_predicoes.py results/predictions_lora_test.csv --coluna glosa_pred_lora
-
-# Gerar novas predições do LoRA: notebooks/avaliacao_lora_colab.ipynb (Colab, GPU T4)
-# Figuras: precisa de data/processed/ (ver data/README.md)
-python src/gerar_figuras.py
 ```
 
-A prova de conceito tem instruções próprias em [`demo/README.md`](demo/README.md).
+**1. Números do LoRA a partir das predições salvas** (sem GPU, cerca de 1 minuto).
+Reproduz a linha do LoRA nas Tabelas 5, 6, 7 e 10 do TCC:
+
+```bash
+python src/avaliar_predicoes.py results/predictions_lora_test.csv --coluna glosa_pred_lora
+```
+
+Saída esperada: `GLOBAL n=12732 BLEU=9.19 chrF=24.05`, seguida dos recortes por
+categoria, domínio e comprimento.
+
+**2. Gerar de novo as predições do LoRA** com o adaptador de `models/lora_adapter/`:
+abra `notebooks/avaliacao_lora_colab.ipynb` no Google Colab (GPU T4) e envie
+`results/predictions_lora_test.csv`, que contém as frases e referências do teste.
+
+**3. Treinar o LoRA do zero**: `notebooks/finetune_lora_colab.ipynb` (Colab, GPU T4,
+cerca de 2 h 33 min). Precisa da divisão em `data/processed/` (ver
+[`data/README.md`](data/README.md)).
+
+**4. Figuras**: `python src/gerar_figuras.py` (precisa de `data/processed/`).
+
+**5. Prova de conceito**: [`demo/README.md`](demo/README.md).
 
 ## O que não está aqui
 
 O código original de preparação dos dados, da linha de base por regras, do
 treino do seq2seq e da avaliação conjunta (`data_prep.py`, `baseline_regras.py`,
-`seq2seq_model.py`, `evaluate.py`), o checkpoint do seq2seq e as predições
-individuais de regras e seq2seq não foram preservados. Dessas duas abordagens
-restam as métricas, registradas no TCC e em `results/RESULTADOS.md`. A
-configuração do seq2seq está descrita na Seção 3.5 do texto.
+`seq2seq_model.py`, `evaluate.py`) e o checkpoint do seq2seq não foram
+preservados. Dessas abordagens restam as métricas, registradas no TCC e em
+`results/RESULTADOS.md`. A configuração do seq2seq está descrita na Seção 3.5 do
+texto, e a da linha de base, na Seção 3.4.
+
+## Licenças
+
+- Código e documentação deste repositório: MIT ([`LICENSE`](LICENSE)).
+- Adaptador LoRA: derivado de `unicamp-dl/ptt5-small-portuguese-vocab`; vale também
+  a licença do modelo base.
+- Corpus VLibrasBD: CC BY-SA 4.0, distribuído pelos autores no Mendeley Data. Não
+  está versionado aqui; as predições em `results/` contêm frases e glosas do
+  conjunto de teste e seguem a mesma licença.
+- `vlibras-translate`: LGPLv3, instalado do PyPI.
+
+## Como citar
+
+```
+G. Sbrana, "libras-tcc: tradução automática de português para glosa em Libras,"
+GitHub, versão v1.0-tcc, 2026. [Online]. Disponível em:
+https://github.com/gabrielsbrana/libras-tcc
+```
+
+Os metadados também estão em [`CITATION.cff`](CITATION.cff).
 
 ## Referências principais
 
-- Lima, M. A. et al. VLibrasBD: a Brazilian Portuguese–Brazilian Sign Language
-  (Libras) bilingual text dataset designed to support neural machine
-  translation. *Data in Brief*, v. 62, 111911, 2025.
-- Hu, E. J. et al. LoRA: low-rank adaptation of large language models. ICLR, 2022.
-- Carmo, D. et al. PTT5: pretraining and validating the T5 model on Brazilian
-  Portuguese data. arXiv:2008.09144, 2020.
+- [1] M. A. Lima et al., "VLibrasBD: a Brazilian Portuguese–Brazilian Sign
+  Language (Libras) bilingual text dataset designed to support neural machine
+  translation," *Data in Brief*, vol. 62, art. 111911, 2025.
+- [2] M. Lima et al., "pt-br2libras-gloss," Mendeley Data, v1, 2025.
+  doi: 10.17632/ryj88ckjww.1.
+- [3] E. J. Hu et al., "LoRA: low-rank adaptation of large language models," em
+  *Proc. ICLR*, 2022.
+- [4] D. Carmo et al., "PTT5: pretraining and validating the T5 model on
+  Brazilian Portuguese data," arXiv:2008.09144, 2020.
